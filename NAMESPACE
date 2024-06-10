@@ -1,0 +1,5 @@
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
+importFrom(data.table, data.table)
+importFrom(data.table, rbindlist)
+useDynLib(AMRSforLS, .registration = TRUE)

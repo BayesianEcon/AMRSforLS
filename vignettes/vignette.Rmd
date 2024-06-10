@@ -1,0 +1,154 @@
+---
+title: "vignette"
+author: "Bayesian Econ"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette proivdes a small example that illustrates how to use `MCMC_ADRS_AD` and the other functions that come with the package.
+
+## Circular Example 
+
+We start by generating a network with $N$ nodes from the following latent space specification:
+
+$$y_{ij} \sim Poi(\lambda_{ij}) $$
+where:
+
+$$\log \lambda_{ij} = \beta - ||\bf{x}_i-\bf{x}_j||^2$$
+In tis example, we will assume that nodes lie on a $K$ dimensional circle.
+
+```{r, fig.show='hold'}
+####Libraries#########
+require(Rcpp)
+require(data.table)
+require(AMRSforLS)
+#####################
+
+N = 20 #number of nodes
+K = 2  #number of latent coordinates
+
+beta  = 5 #intercept
+POIS = matrix(0, N, N) #empty matrix
+
+#Setup the latent space representation of nodes on a cirlce
+
+X = matrix(rep(0, N*K), N, K) #X stores the latent coordinates
+
+r <- 1 #radius of the circle
+
+# Calculate the angle between each point
+angle <- 2 * pi / N
+
+# Create empty vectors to store the coordinates
+x <- numeric(N)
+y <- numeric(N)
+
+# Generate the coordinates of each point
+for (i in 1:N) {
+  x[i] <- r * cos(i * angle)
+  y[i] <- r * sin(i * angle)
+}
+
+X[,1]<- x
+X[,2]<- y
+
+plot(X[,1], X[,2], xlab = "coordinate 1",
+     ylab = "coordinate 2", pch = 19, col ="steelblue") #plot the latent positions of the nodes
+
+D = as.matrix(dist(X))^2
+
+for(i in 1:N){
+  for(j in (i):N){
+    POIS[i,j] = rpois(1, exp(beta -D[i,j]))
+  }
+}
+
+ADJ = t(POIS) + POIS
+diag(ADJ) = 0
+rm(D, POIS)
+```
+
+## Estimation
+We use the function `MCMC_ADRS_AD`, similarly one can use `MCMC_ADRS_BLOCK_AD` and `MCMC_AD`.
+
+```{r, fig.show='hold'}
+
+ N = nrow(ADJ)
+  K = 2 #set the dimensions of the latent space
+
+  zi = matrix(0, N , K)  #set empty starting points
+
+  #add noise to starting points
+  for(k in 1:K){
+    zi[,k] = rnorm(N,0, 0.01)
+  }
+
+  #set the adaptive scaling parameters, Andrieu and Thoms 2008
+  lam_ad = rep(2.8 , N)
+  mu_mat = matrix(0, N, K)
+  id<-diag(rep(0.01, K))
+  Sigma_ad <- rep(list(id), N)
+  Sigma_ad <- lapply(Sigma_ad, FUN = function(x){as.matrix(x)})
+
+  #start the estimation
+  result =MCMC_ADRS_AD( y = ADJ, #adj matrix
+                         beta = 0,   #intercept starting point
+                         beta_a = 0,   #mean prior on beta
+                         beta_b = 5,  #sd prior on beta
+                         z_i = zi,  # starting points for latent coordinates
+                         zeta_a = 0, #mean prior on latent coordinates
+                         zeta_b = 5,  #sd prior on latent coordinates
+                         lam_ad, #adaptive scaling parameters, see help
+                         mu_mat, #adaptive scaling parameters, see help
+                         Sigma_ad,#adaptive scaling parameters, see help
+                         N = N, #number of nodes
+                         K = K,  #dimension latent space
+                         prop_sigma_beta  = 0.05, #proposal sd beta
+                         acc_target_z  = 0.234, #proposal sd zeta
+                         scan_every = 100,
+                         Iterations =30000, #number of
+                         k_shift = 0.5,
+                         eq_option =1, #equal probability option
+                         eq_prob= 0.25  #if eq_option =1, equal probability
+                         )
+```
+
+## Explore the Chains
+
+We now explore the list of results and compare it with the groundtruth.
+
+### Intercept $\beta$
+```{r, fig.show='hold'}
+plot.ts(result$beta_ite, type = "l", xlab = "iteration", ylab = expression(beta), col = "steelblue")
+abline(h = beta, col = "red", lty = 3)
+```
+
+### Latent Coordinates $\bf{x}_i$
+
+```{r, fig.show='hold'}
+zi_res<-lapply(result$zeta_ite, FUN = function(x){apply(x,2, function(x){x-mean(x)})}) #de-mean
+zi_res<-lapply(zi_res, FUN = function(x){procrustes_cpp(as.matrix(X[,1:K]),x )}) #apply procrustes trasnformation
+ zi_sub<-zi_res[seq(2000,3000, 10)] #burnin and thinning
+ 
+ zi_sub<-lapply(zi_sub, function(x){data.table::data.table(x)})
+ Zall<-data.table::rbindlist(zi_sub)
+ Zall<-data.frame(Zall)
+
+ #plot the estimated latent coordinates  
+ plot(Zall$V1, Zall$V2, xlab = "coordinate 1",
+     ylab = "coordinate 2", pch = ".", col ="steelblue") 
+ #plot the groundtruth in red
+ points(X[,1], X[,2], col = "red", pch = 4)
+```
+
