@@ -1,1 +1,26 @@
-AMRS for LS package
+TITLE: "Multiple Random Scan Gibbs for Latent Space Models"
+
+AUTHORS:      ..........
+
+AVAILABLE AT:    ..........
+
+PLEASE CITE AS:   ..........
+
+DATE:        June 2024
+
+
+Tested on R version 4.2.2 (2022-10-31) -- "Innocent and Trusting"
+
+----------------------------------------------------------------------------------------
+The following Repository contains the R package AMRSforLS. The name of the package
+stands for Adaptive Multiple Random Scan for Latent Space models. The package implements
+a fast MCMC algorithm for the estimation of Latent Space network models.
+The core of the package is written in C++ and integrated to R with Rcpp. 
+
+You can install the R package as follows:
+
+library(devtools)
+install_github("BayesianEcon/AMRSforLS")
+
+refer to the help page for a short description of the key functions.
+-----------------------------------------------------------------------------------------
