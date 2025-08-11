@@ -1,6 +1,6 @@
 
 
-# AMRSforLS <img src="man/figures/AMRSforLS_logo.png" align="right" height="150"/>
+# AMRSforLS <img src="docs/logo.png" align="right" height="150"/>
 
 Adaptive **M**ultiple **R**andom **S**can for **L**atent **S**pace models (AMRSforLS) — an R package with fast C++ backends for Bayesian estimation of static latent space network models under Bernoulli or Poisson likelihoods. The package implements:
 
