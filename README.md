@@ -111,12 +111,12 @@ out <- MCMC_ADRS_BLOCK_AD(
 ## Model and algorithms (high-level)
 We model dyadic outcomes via a distance-based latent space:
 
-- **Bernoulli**:  \(Y_{ij} \sim \text{Bernoulli}(p_{ij})\), with \(\text{logit}(p_{ij}) = \beta - \lVert z_i - z_j \rVert^2\).
-- **Poisson**:   \(Y_{ij} \sim \text{Poisson}(\lambda_{ij})\), with \(\log \lambda_{ij} = \beta - \lVert z_i - z_j \rVert^2\).
+- **Bernoulli**:  $Y_{ij} \sim \text{Bernoulli}(p_{ij})$, with $\text{logit}(p_{ij}) = \beta - \lVert z_i - z_j \rVert^2$.
+- **Poisson**:   $Y_{ij} \sim \text{Poisson}(\lambda_{ij})$, with $\log \lambda_{ij} = \beta - \lVert z_i - z_j \rVert^2$.
 
 Priors:
-- \(\beta \sim \mathcal{N}(\beta_a, \beta_b^2)\)
-- Each coordinate of \(z_i\) has a normal prior \(\mathcal{N}(\zeta_a, \zeta_b^2)\).
+- $\beta \sim \mathcal{N}(\beta_a, \beta_b^2)$
+- Each coordinate of $z_i$ has a normal prior $\mathcal{N}(\zeta_a, \zeta_b^2)$.
 
 Algorithms:
 - **Systematic**: update all nodes sequentially each iteration (`MCMC_AD`).
